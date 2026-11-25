@@ -13,6 +13,9 @@ import android.widget.TextView
 
 class MainActivity : Activity() {
 
+    private lateinit var status: TextView
+    private lateinit var overlayButton: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -41,21 +44,18 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
         }
 
-        val status = TextView(this).apply {
-            text = "Tu compañera de aventura se está preparando."
+        status = TextView(this).apply {
             textSize = 15f
             setTextColor(0xFFD5CBE8.toInt())
             gravity = Gravity.CENTER
             setPadding(0, 28, 0, 24)
         }
 
-        val overlayButton = Button(this).apply {
-            text = "Configurar ventana flotante"
+        overlayButton = Button(this).apply {
             setOnClickListener {
                 if (Settings.canDrawOverlays(this@MainActivity)) {
-                    status.text = "Permiso de ventana flotante concedido."
+                    refreshOverlayPermissionState()
                 } else {
-                    status.text = "Activá el permiso para permitir la ventana flotante."
                     val intent = Intent(
                         Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                         Uri.parse("package:$packageName")
@@ -71,6 +71,28 @@ class MainActivity : Activity() {
         layout.addView(overlayButton, matchWrap())
 
         setContentView(layout)
+        refreshOverlayPermissionState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::status.isInitialized && ::overlayButton.isInitialized) {
+            refreshOverlayPermissionState()
+        }
+    }
+
+    private fun refreshOverlayPermissionState() {
+        val permissionGranted = Settings.canDrawOverlays(this)
+
+        if (permissionGranted) {
+            status.text = "Permiso concedido. Katia ya puede usar la ventana flotante cuando esa función esté implementada."
+            overlayButton.text = "Permiso configurado"
+            overlayButton.isEnabled = false
+        } else {
+            status.text = "Concedé el permiso para permitir que Katia pueda mostrarse sobre Minecraft."
+            overlayButton.text = "Configurar ventana flotante"
+            overlayButton.isEnabled = true
+        }
     }
 
     private fun matchWrap(): LinearLayout.LayoutParams =
